@@ -140,7 +140,7 @@ class Main is Game, KeyboardListener
         
         // Enable the audio file and attach to the first box
         soundCar1:LoadToStream("Sound/carSound.wav")
-        soundCar1:SetVolume(0.3)
+        soundCar1:SetVolume(1.0)
         soundCar1:Play()
         soundCar1:EnableLooping()
         box1:Add(soundCar1)
@@ -152,7 +152,7 @@ class Main is Game, KeyboardListener
         
         // Enable the audio file and attach to the first box
         soundCar2:LoadToStream("Sound/carSound.wav")
-        soundCar2:SetVolume(0.3)
+        soundCar2:SetVolume(1.0)
         soundCar2:Play()
         soundCar2:EnableLooping()
         box2:Add(soundCar2)
@@ -164,7 +164,7 @@ class Main is Game, KeyboardListener
         
         // Enable the audio file and attach to the first box
         soundCar3:LoadToStream("Sound/carSound.wav")
-        soundCar3:SetVolume(0.3)
+        soundCar3:SetVolume(1.0)
         soundCar3:Play()
         soundCar3:EnableLooping()
         box3:Add(soundCar3)
@@ -176,7 +176,7 @@ class Main is Game, KeyboardListener
         
         // Enable the audio file and attach to the first box
         soundCar4:LoadToStream("Sound/carSound.wav")
-        soundCar4:SetVolume(0.3)
+        soundCar4:SetVolume(1.0)
         soundCar4:Play()
         soundCar4:EnableLooping()
         box4:Add(soundCar4)
@@ -254,6 +254,21 @@ if box4:GetZ() < -10 // -10 is the Z-Axis position of the left wall
             if IsNearCar(character, box1, soundCar1)
                 // if the character is near a box we play the sound car 
                 soundCar1:Stream()
+            //elseif {check nearness for box 2 and then for the rest of the boxes
+            end 
+if IsNearCar(character, box2, soundCar2)
+                // if the character is near a box we play the sound car 
+                soundCar2:Stream()
+            //elseif {check nearness for box 2 and then for the rest of the boxes
+            end 
+if IsNearCar(character, box3, soundCar3)
+                // if the character is near a box we play the sound car 
+                soundCar3:Stream()
+            //elseif {check nearness for box 2 and then for the rest of the boxes
+            end 
+if IsNearCar(character, box4, soundCar4)
+                // if the character is near a box we play the sound car 
+                soundCar4:Stream()
             //elseif {check nearness for box 2 and then for the rest of the boxes
             end 
         end
