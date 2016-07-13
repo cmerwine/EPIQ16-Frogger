@@ -52,12 +52,22 @@ class Main is Game, KeyboardListener
 
     // The first box made
     Model box1
+    Model box2
+    Model box3
+    Model box4
 
     //Color of the first box
     Color colorBox1
+    Color colorBox2
+    Color colorBox3
+    Color colorBox4
 
     // Adds sound to the first box
     Audio3D soundCar1
+    Audio3D soundCar2
+    Audio3D soundCar3
+    Audio3D soundCar4
+
 
     // Sets up the end goal of the game
     Model goal
@@ -134,7 +144,43 @@ class Main is Game, KeyboardListener
         soundCar1:Play()
         soundCar1:EnableLooping()
         box1:Add(soundCar1)
+
+ colorBox2:SetColor(0, 255, 0, 1)
+        box2:LoadBox(2,2,2,colorBox2)
+        Add(box2)
+        box2:SetPosition(20, -2, 0)
         
+        // Enable the audio file and attach to the first box
+        soundCar2:LoadToStream("Sound/carSound.wav")
+        soundCar2:SetVolume(0.3)
+        soundCar2:Play()
+        soundCar2:EnableLooping()
+        box2:Add(soundCar2)
+
+ colorBox3:SetColor(255, 0, 0, 1)
+        box3:LoadBox(2,2,2,colorBox3)
+        Add(box3)
+        box3:SetPosition(40, -2, 0)
+        
+        // Enable the audio file and attach to the first box
+        soundCar3:LoadToStream("Sound/carSound.wav")
+        soundCar3:SetVolume(0.3)
+        soundCar3:Play()
+        soundCar3:EnableLooping()
+        box3:Add(soundCar3)
+        
+ colorBox4:SetColor(255, 0, 255, 1)
+        box4:LoadBox(2,2,2,colorBox4)
+        Add(box4)
+        box4:SetPosition(50, -2, 0)
+        
+        // Enable the audio file and attach to the first box
+        soundCar4:LoadToStream("Sound/carSound.wav")
+        soundCar4:SetVolume(0.3)
+        soundCar4:Play()
+        soundCar4:EnableLooping()
+        box4:Add(soundCar4)
+
 
         // Loads and adds the goal box to the scene
         talk:Say("You just started the game. Your objective is set ahead. Be careful, cars will be in your way. Try to avoid them by paying attention to their sound. You can use arrow keys to move.")                                               
@@ -167,19 +213,42 @@ class Main is Game, KeyboardListener
 
         if IsColliding(character, box1) // if the player is hit by a box, GAME OVER
             Lose()
+elseif IsColliding(character, box2)
+        Lose()
+elseif IsColliding(character, box3)
+        Lose()
+elseif IsColliding(character, box4)
         //elseif {check box 2 collision and then check for the remaining boxes
         elseif IsColliding(character, goal)// if he hit the goal, victory
             Win()
         else
             //if there are no collisions, we move the boxes along the Z-Axis 
-            box1:Move(0, 0, seconds * -5)
-
+            box1:Move(0, 0, seconds * -7)
+            box2:Move(0,0, seconds * -5)
+box3:Move(0,0, seconds * -3)
+box4:Move(0,0, seconds * -10)
             // when a box hits the other wall, we have to put it back to its first position 
-            if box1:GetZ() < -10 // -10 is the Z-Axis position of the left wall 
+            if box1:GetZ() < -7 // -10 is the Z-Axis position of the left wall 
                 Remove(box1) // we remove it temporarly of the scene
                 box1:SetZ(10) // the starting point
                 Add(box1) // we put it again on the scene
             end
+            if box2:GetZ() < -12
+                  Remove(box2) // we remove it temporarly of the scene
+                box2:SetZ(10) // the starting point
+                Add(box2)
+            end
+if box3:GetZ() < -8 // -10 is the Z-Axis position of the left wall 
+                Remove(box3) // we remove it temporarly of the scene
+                box3:SetZ(10) // the starting point
+                Add(box3) // we put it again on the scene
+            end
+if box4:GetZ() < -10 // -10 is the Z-Axis position of the left wall 
+                Remove(box4) // we remove it temporarly of the scene
+                box4:SetZ(10) // the starting point
+                Add(box4) // we put it again on the scene
+            end
+ 
 
             // every update we check if the character is near a box 
             if IsNearCar(character, box1, soundCar1)
