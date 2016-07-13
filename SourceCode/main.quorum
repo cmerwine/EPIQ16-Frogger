@@ -1,0 +1,286 @@
+use Libraries.Game.Game
+use Libraries.Game.Graphics.Model
+use Libraries.Game.Graphics.Color
+use Libraries.Game.Graphics.Camera
+use Libraries.Game.Graphics.PointLight
+use Libraries.Game.Graphics.PerspectiveCamera
+use Libraries.Game.Layer3D
+use Libraries.Game.Graphics.AmbientLight
+use Libraries.Game.Graphics.DirectionalLight
+use Libraries.Interface.Events.KeyboardListener
+use Libraries.Interface.Events.KeyboardEvent
+use Libraries.Game.Audio3D
+use Libraries.Game.Graphics.Label
+use Libraries.Sound.Speech
+
+/*
+    This is a default class for creating a game in Quorum. Note that the Main 
+    action begins by calling StartGame(), which loads a window a game can 
+    be displayed in. The action CreateGame is where the game should load any 
+    assets, like images to be displayed, frames of animation, or sounds to be
+    played. 
+*/
+class Main is Game, KeyboardListener
+    /*
+        This action, Main, starts our computer program. In Quorum, programs always
+        begin from Main.
+    */
+
+    // The camera
+    PerspectiveCamera camera = undefined
+
+    // The character and the light
+    Model character
+    PointLight pointLight
+
+    // The model for the walls and their color
+    Model wallLeft
+    Model wallRight
+    Color grey
+    Color red
+
+    // The speed of the character when he moves
+    number speed = 8
+
+    // These are the values that we will use to move the character
+    number positionX = 0
+    number positionY = 0
+    number positionZ = 0
+
+    // The floor
+    Model floor
+
+    // The first box made
+    Model box1
+
+    //Color of the first box
+    Color colorBox1
+
+    // Adds sound to the first box
+    Audio3D soundCar1
+
+    // Sets up the end goal of the game
+    Model goal
+    boolean isTouched = false
+    boolean badEnding = true
+    Label gameOverZone
+    Speech talk
+    number speakerLimit = 0
+    
+    action Main
+        StartGame()
+    end
+
+    /*
+        This action sets up the default values for a game. For example, we might
+        use the Libraries.Game.Graphics.Drawable class to load up an image or 
+        a shape. Or, we might add a Libraries.Interface.Button for making something clickable
+        or a Libraries.Interface.TextBox for gathering user input in a game.
+    */
+    action CreateGame
+
+        // Initialize camera position, and direction
+        camera = cast(PerspectiveCamera,GetCamera3D())
+        camera:SetPosition(-3, 1, 0)
+        camera:LookAt(1, 1, 0) 
+        camera:SetUp(0,1,0)
+
+        // Initialize character, his size and position
+        character:Load("Models/man.g3db")
+        character:Scale(0.005, 0.005, 0.005)
+        character:SetPosition(1, -2, 0)
+        Add(character)
+
+        // Add light to the character
+        AmbientLight ambient
+        ambient:SetColor(0.7, 0.3, 0.3, 1)
+        SetAmbientLight(ambient)
+
+        DirectionalLight light
+        light:SetColor(0, 0.3, 0.4, 1)
+        light:SetDirection(0.2, -0.8, 0.8)
+        Add(light)
+
+        pointLight:SetColor(1, 1, 1, 1)
+        pointLight:SetPosition(0, 3, 0)
+        pointLight:SetIntensity(20)
+        character:Add(pointLight)
+
+        // Create and add walls to the scene
+        grey:SetColor(128, 128, 128, 1)
+        red = red:Red()
+        wallLeft:LoadBox(100, 20, 5, grey)
+        wallLeft:SetPosition(30, -2, -32)
+        wallRight:LoadBox(100, 20, 5, grey)
+        wallRight:SetPosition(30, -2, 32)
+        floor:LoadBox(90, 0.8, 68, grey)
+        floor:SetPosition(40,-4,0)
+        Add(wallLeft)
+        Add(wallRight)
+        Add(floor)
+        
+        // Add a keyboardListener to move the character
+        AddKeyboardListener(me)
+
+        // Position and color of the first box
+        colorBox1:SetColor(0, 0, 255, 1)
+        box1:LoadBox(2,2,2,colorBox1)
+        Add(box1)
+        box1:SetPosition(10, -2, 0)
+        
+        // Enable the audio file and attach to the first box
+        soundCar1:LoadToStream("Sound/carSound.wav")
+        soundCar1:SetVolume(0.3)
+        soundCar1:Play()
+        soundCar1:EnableLooping()
+        box1:Add(soundCar1)
+        
+
+        // Loads and adds the goal box to the scene
+        talk:Say("You just started the game. Your objective is set ahead. Be careful, cars will be in your way. Try to avoid them by paying attention to their sound. You can use arrow keys to move.")                                               
+        
+        Color blue
+        blue = blue:Blue()
+        goal:LoadBox(5,5,60, blue)
+        goal:SetPosition(80, -2, 0)
+        Add(goal)
+
+        gameOverZone:SetSize(250, 50)
+        gameOverZone:SetPosition(350, 350)
+
+
+    end
+
+    /*
+        The update action is called on every "frame" of animation in a game. This
+        action should be used to do operations on items. So, for example, we 
+        might use this action to change frames of animation, to rotate items, 
+        or to make creatures jump.
+    */
+    action Update(number seconds)
+
+        // Moves the character every update depending on the values of the 3 fields
+        character:Move(positionX*seconds, positionY*seconds, positionZ*seconds)
+
+        // Moves the camera according to the character position
+        camera:SetPosition(character:GetPosition():GetX()-4,character:GetPosition():GetY()+3,character:GetPosition():GetZ())
+
+        if IsColliding(character, box1) // if the player is hit by a box, GAME OVER
+            Lose()
+        //elseif {check box 2 collision and then check for the remaining boxes
+        elseif IsColliding(character, goal)// if he hit the goal, victory
+            Win()
+        else
+            //if there are no collisions, we move the boxes along the Z-Axis 
+            box1:Move(0, 0, seconds * -5)
+
+            // when a box hits the other wall, we have to put it back to its first position 
+            if box1:GetZ() < -10 // -10 is the Z-Axis position of the left wall 
+                Remove(box1) // we remove it temporarly of the scene
+                box1:SetZ(10) // the starting point
+                Add(box1) // we put it again on the scene
+            end
+
+            // every update we check if the character is near a box 
+            if IsNearCar(character, box1, soundCar1)
+                // if the character is near a box we play the sound car 
+                soundCar1:Stream()
+            //elseif {check nearness for box 2 and then for the rest of the boxes
+            end 
+        end
+    end
+
+//    action AddAudioToBox(Model box, Audio3D sound)
+//        sound:LoadToStream("Sound/carSound.wav")
+//        sound:SetVolume(0.3)
+//        sound:Play()
+//        sound:EnableLooping()
+//        box:Add(sound)
+//    end
+
+    action PressedKey(KeyboardEvent event)
+        if event:keyCode = event:UP
+            MoveForward(speed)
+        elseif event:keyCode = event:DOWN
+            MoveBackward(speed)
+        elseif event:keyCode = event:LEFT
+            StrafeLeft(speed)
+        elseif event:keyCode = event:RIGHT
+            StrafeRight(speed)
+        end
+    end
+
+    action ReleasedKey(KeyboardEvent event)
+        positionX = 0      
+        positionY = 0
+        positionZ = 0
+    end
+
+    action MoveForward(number speed) 
+        positionX = speed       // we move forward
+        positionY = 0
+        positionZ = 0
+    end
+
+    action MoveBackward(number speed)
+         positionX = -speed       // we move forward
+        positionY = 0
+        positionZ = 0
+    end
+    
+    action StrafeLeft(number speed)
+        positionX = 0       // we move forward
+        positionY = 0
+        positionZ = speed
+    end
+
+    action StrafeRight(number speed)
+        positionX = 0       // we move forward
+        positionY = 0
+        positionZ = -speed
+
+    end
+
+    action IsNearCar(Model character, Model box, Audio3D soundCar) returns boolean
+        soundCar:SetListenerDirection(camera:GetDirection())
+        return character:GetPosition():GetX() < box:GetX() + 5 and character:GetPosition():GetX() > box:GetX() - 5
+        and character:GetPosition():GetZ() < box:GetZ() + 5 and character:GetPosition():GetZ() > box:GetZ() - 5
+    end
+
+    action IsColliding(Model character, Model box) returns boolean
+        if character:GetX() < box:GetX()+(box:GetWidth()/2) and character:GetX() > box:GetX()-(box:GetWidth()/2) and character:GetZ() < box:GetZ()+(box:GetDepth()/2) and character:GetZ() > box:GetZ()-(box:GetDepth()/2)
+            return true
+        else
+            return false
+        end
+    end
+
+    action StopCharacter()
+        positionX = 0      
+        positionY = 0
+        positionZ = 0
+    end
+
+    action Lose()
+        gameOverZone:SetText("GAME OVER!")          
+        Add(gameOverZone)
+        StopCharacter()
+        if speakerLimit < 1
+            talk:Say("You were hit by a car! GAME OVER!", true)
+            speakerLimit = 1
+        end
+        RemoveKeyboardListener(me)
+    end
+
+    action Win()
+        gameOverZone:SetText("Congratulations! You reached the goal")
+        Add(gameOverZone)
+        StopCharacter()
+        if speakerLimit < 1 // we do that to ensure that the message plays just once
+            talk:Say("Congratulations! You reached the goal! You win!", true)
+            speakerLimit = 1
+        end
+        RemoveKeyboardListener(me)
+    end
+    
+end
